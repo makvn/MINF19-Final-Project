@@ -1,0 +1,23 @@
+image: ubuntu:20.04
+
+stages:
+  - deploy
+
+deploy:
+  stage: deploy
+  only: 
+    - develop
+  before_script:
+    - apt-get update -y && apt-get install openssh-client rsync -y
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo 'echo "$SSH_PASSPHRASE"' > ~/.ssh/.print_ssh_password
+    - chmod 700 ~/.ssh/.print_ssh_password
+    - chmod +x ~/.ssh/.print_ssh_password
+    - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | DISPLAY=":0.0" SSH_ASKPASS=~/.ssh/.print_ssh_password setsid ssh-add - > /dev/null
+  script:
+    - ssh dev@103.110.84.108 "whoami && docker ps && cd /var/www/sg2-fe && git pull && cd ../laradock && docker compose exec --user=www-data sg-php bash -c 'cd sg2-fe && yarn && yarn build'"
+
