@@ -1,4 +1,4 @@
-FROM php:8.1-fpm
+FROM php:7.4-fpm
 
 # Arguments defined in docker-compose.yml
 ARG user
@@ -11,8 +11,9 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
+    libzip-dev \
     zip \
-    unzip
+    unzip 
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -23,7 +24,8 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 #     install-php-extensions pdo pdo_mysql mbstring exif pcntl bcmath gd
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd
+# RUN docker-php-ext-configure zip --with-libzip
+RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
 # RUN docker-php-ext-enable pdo pdo_mysql mbstring exif pcntl bcmath gd
 
 # Get latest Composer
