@@ -1,0 +1,84 @@
+version: '1.0'
+x-common-variables: &common-variables
+  MYSQL_DATABASE: TMS_DB
+  MYSQL_USER: tms_user
+  MYSQL_PASSWORD: 123456
+
+services:
+  # Database Service
+  database:
+    container_name: tms-db
+    image: mysql
+    restart: always
+    cap_add:
+      - SYS_NICE
+    volumes:
+      - "./db.sql:/docker-entrypoint-initdb.d/setup.sql"
+    ports:
+      - "9906:3306"
+    environment:
+      <<: *common-variables
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_HOST: localhost
+  backend:
+    container_name: tms-backend-api
+    build: 
+      args:
+        user: makvn
+        uid: 1000
+      context: ./TMS-BE
+      dockerfile: Dockerfile
+    volumes:
+      - ./TMS-BE:/var/www:delegated
+    environment:
+      - "DB_HOST=127.0.0.1"
+      - "REDIS_HOST=cache"
+    networks:
+      - tms-network
+  # Frontend Service
+  frontend:
+    container_name: tms-frontend-api
+    build: 
+      context: ./TMS-FE
+      target: ${NODE_ENV}
+      dockerfile: Dockerfile
+      args:
+          - "NODE_ENV=${NODE_ENV}"
+          - "SERVER_PORT=${SERVER_PORT}"
+          - "CLIENT_PORT=${CLIENT_PORT}"
+          - "CLIENT_HOST=${CLIENT_HOST}"
+    ports:
+      - "${CLIENT_PORT}:${CLIENT_PORT}"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./TMS-FE:/node/app:deletaged
+      - /node/app/node_modules
+  nginx:
+    container_name: tms-nginx
+    # depends_on:
+      # - api
+      # - frontend
+    restart: unless-stopped
+    build:
+      dockerfile: Dockerfile
+      context: ./nginx
+    volumes:
+      - ./TMS-BE:/var/www:delegated
+    ports:
+      - "8000:80"
+    networks:
+      - tms-network
+  adminer:
+      image: adminer:latest
+      restart: unless-stopped
+      ports:
+        - 8001:8080
+      depends_on:
+        - database
+      environment:
+        ADMINER_DEFAULT_SERVER: database
+
+networks:
+  tms-network:
+    driver: bridge
