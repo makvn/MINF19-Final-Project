@@ -20,6 +20,8 @@ services:
       <<: *common-variables
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_HOST: localhost
+    networks:
+      - tms-network
   backend:
     container_name: tms-backend-api
     build: 
@@ -31,13 +33,15 @@ services:
     volumes:
       - ./TMS-BE:/var/www:delegated
     environment:
-      - "DB_HOST=127.0.0.1"
+      # - "DB_HOST=127.0.0.1"
       - "REDIS_HOST=cache"
+    depends_on:
+      - database
     networks:
       - tms-network
   # Frontend Service
   frontend:
-    container_name: tms-frontend-api
+    container_name: tms-frontend
     build: 
       context: ./TMS-FE
       target: ${NODE_ENV}
@@ -54,6 +58,10 @@ services:
     volumes:
       - ./TMS-FE:/node/app:deletaged
       - /node/app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - tms-network
   nginx:
     container_name: tms-nginx
     # depends_on:

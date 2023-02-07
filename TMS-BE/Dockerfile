@@ -42,4 +42,4 @@ COPY . .
 
 USER $user
 
-ENTRYPOINT [ "sh", "entrypoint.sh" ]
+# ENTRYPOINT [ "sh", "entrypoint.sh" ]

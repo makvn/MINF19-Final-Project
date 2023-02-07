@@ -19,4 +19,4 @@ fi
 # php artisan config:clear
 # php artisan route:clear
 
-exec "$@"
+exec docker-php-entrypoint "$@"
